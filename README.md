@@ -4,7 +4,7 @@ Berlin Rental Price Predictor is a machine learning web application that estimat
 
 ## Live Demo
 
-[View the live demo](https://your-demo-link-here.com)
+[View the live demo](https://berlin-rental-predictor.streamlit.app)
 
 ## Features
 
