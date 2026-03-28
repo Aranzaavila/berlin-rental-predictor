@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import sys
 
 import joblib
 import pandas as pd
@@ -8,7 +9,8 @@ import streamlit as st
 
 st.set_page_config(page_title="Berlin Rental Price Predictor", page_icon="🏠", layout="wide")
 
-MODEL_PATH = Path(__file__).resolve().parent / "model.pkl"
+PROJECT_ROOT = Path(__file__).resolve().parent
+MODEL_PATH = PROJECT_ROOT / "model.pkl"
 ROOM_TYPE_OPTIONS = ["Entire home/apt", "Private room", "Shared room", "Hotel room"]
 DEFAULT_OPTIONAL_VALUES = {
     "minimum_nights": 2,
@@ -155,10 +157,28 @@ NEIGHBOURHOOD_COORDINATES: dict[str, tuple[float, float]] = {
 }
 
 
+def ensure_model_artifact(model_path: Path = MODEL_PATH) -> None:
+    if model_path.exists():
+        return
+
+    project_root = str(PROJECT_ROOT)
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+    with st.spinner("Training model for the first time, please wait..."):
+        from src.train import main as train_main
+
+        train_main()
+
+    if not model_path.exists():
+        raise FileNotFoundError(
+            f"Model file was not created at '{model_path}' after training completed."
+        )
+
+
 @st.cache_resource
 def load_model_artifact(model_path: Path = MODEL_PATH) -> dict:
-    if not model_path.exists():
-        raise FileNotFoundError(f"Model file not found at '{model_path}'. Train the model first.")
+    ensure_model_artifact(model_path)
 
     artifact = joblib.load(model_path)
     if not isinstance(artifact, dict):
